@@ -284,9 +284,9 @@ def main():
                 return 0
             if event.type == pg.KEYDOWN and event.key == pg.K_SPACE:
                 beams.add(Beam(bird))
-            if event.type == pg.KEYDOWN and event.key == pg.K_RSHIFT and score.score >= 0: # scoreいじる
+            if event.type == pg.KEYDOWN and event.key == pg.K_RSHIFT and score.score > 100: 
                 bird.change_state("hyper", 500)
-               # score.score -= 100
+                score.score -= 100
         screen.blit(bg_img, [0, 0])
 
         if tmr%200 == 0:  # 200フレームに1回，敵機を出現させる

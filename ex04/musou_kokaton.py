@@ -227,6 +227,36 @@ class Enemy(pg.sprite.Sprite):
         self.rect.centery += self.vy
 
 
+class Shield(pg.sprite.Sprite):
+    """
+    防御壁に関するクラス
+    """
+
+    def __init__(self, bird: Bird, life: int):
+        """
+        防御壁SurFaceを生成する
+        引数1：こうかとん
+        引数2：発動時間
+        """
+        super().__init__()
+        x,y = bird.rect.centerx, bird.rect.centery
+        h, w = bird.rect.height, bird.rect.width
+        self.image = pg.Surface((20, h*2))
+        pg.draw.rect(self.image, (0, 0, 0), bird.rect)
+        self.rect = self.image.get_rect()
+        self.rect.centerx = x +100
+        self.rect.centery = y + 50
+        self.life = life
+
+    def update(self):
+        """
+        発動時間が0になったら停止状態にする
+        """
+        self.life -= 1
+        if self.life < 0:
+            self.kill()
+
+
 class Score:
     """
     打ち落とした爆弾，敵機の数をスコアとして表示するクラス
@@ -260,6 +290,7 @@ def main():
     beams = pg.sprite.Group()
     exps = pg.sprite.Group()
     emys = pg.sprite.Group()
+    sheilds = pg.sprite.Group()
 
     tmr = 0
     clock = pg.time.Clock()
@@ -275,6 +306,10 @@ def main():
         if tmr%200 == 0:  # 200フレームに1回，敵機を出現させる
             emys.add(Enemy())
 
+        if score.score > 10 and event.type == pg.KEYDOWN and event.key == pg.K_CAPSLOCK:
+            sheilds.add(Shield(bird, 400))
+            score.score -= 10 #50点消費
+
         for emy in emys:
             if emy.state == "stop" and tmr%emy.interval == 0:
                 # 敵機が停止状態に入ったら，intervalに応じて爆弾投下
@@ -288,6 +323,14 @@ def main():
         for bomb in pg.sprite.groupcollide(bombs, beams, True, True).keys():
             exps.add(Explosion(bomb, 50))  # 爆発エフェクト
             score.score_up(1)  # 1点アップ
+
+        for sheild_b in pg.sprite.groupcollide(sheilds, bombs, False, True).keys():
+            exps.add(Explosion(sheild_b, 50)) #爆発エフェクト
+            score.score_up(1)
+
+        for sheild_e in pg.sprite.groupcollide(sheilds, emys, False, True).keys():
+            exps.add(Explosion(sheild_e, 50)) #爆発エフェクト
+            score.score_up(10)
 
         if len(pg.sprite.spritecollide(bird, bombs, True)) != 0:
             bird.change_img(8, screen) # こうかとん悲しみエフェクト
@@ -306,6 +349,8 @@ def main():
         exps.update()
         exps.draw(screen)
         score.update(screen)
+        sheilds.update()
+        sheilds.draw(screen)
         pg.display.update()
         tmr += 1
         clock.tick(50)
